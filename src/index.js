@@ -26,11 +26,14 @@ function loadData() {
 }
 
 function ready(data) {
+  const numData = data.length + 1;
   const energyMinMax = d3.extent(data, (d) => d.energy);
   const ghgMinMax = d3.extent(data, (d) => d.ghg);
   const sizeScale = d3.scaleLinear().domain(energyMinMax).range([0.25, 1]); //size mapped to energy
-  const numPetalScale = d3.scaleQuantize().domain(ghgMinMax).range([5, 7, 10]); //number mapped to ghg
+  const numPetalScale = d3.scaleQuantize().domain(ghgMinMax).range([5, 7, 12]); //number mapped to ghg
+  const xScale = d3.scaleLinear().domain([0, numData]).range([0, 1000]);
 
+  //for each county, return data
   const flowersData = _.map(data, (d) => {
     const numPetals = numPetalScale(d.ghg);
     // console.log(numPetals);
@@ -47,13 +50,13 @@ function ready(data) {
   //console.log(flowersData[0].petSize);
   console.log(flowersData);
 
+  //base SVG
   const svg = d3
     .select(".vis")
     .append("svg")
-    .attr("width", petalSize * 2)
-    .attr("height", petalSize * 2)
+    .attr("width", petalSize * 20)
+    .attr("height", petalSize * 20)
     .append("g");
-  //.attr("transform", "translate(50,50)");
 
   const flowers = d3
     .select("svg")
@@ -64,46 +67,31 @@ function ready(data) {
     .attr(
       "transform",
       (d, i) =>
-        `translate(${(i % 5) * petalSize},${
-          Math.floor(i / 5) * petalSize
-        })scale(${d.petSize})`
-    )
-    .attr("transform", "translate(50, 50)");
+        `translate(${
+          petalSize + (i - 1) * (2 * petalSize)
+        },${petalSize} )scale(${d.petSize})`
+    );
+
+  // .attr(
+  //   "transform",
+  //   (d, i) =>
+  //     `translate(${(i % 5) * petalSize},${
+  //       Math.floor(i / 5) * petalSize
+  //     })scale(${d.petSize})`
+  // )
+  // .attr("transform", "translate(50, 50)");
 
   flowers
     .selectAll("path")
-    .data((d) => d.petals)
+    .data((d) => d.petals) //array of petals from above
     .enter()
     .append("path")
-    .attr("d", (d) => d.petalPath)
-    .attr("transform", (d) => `rotate(${d.angle})`);
-  //.attr('fill', (d, i) => d3.interpolateWarm(d.angle / 360));
+    .attr("d", (d) => d.petalPath) //
+    .attr("x", (d) => xScale(d.numPetals))
+    .attr("transform", (d) => `rotate(${d.angle})`) //rotates each petal
+    .attr("fill", (d, i) => d3.interpolateBlues(d.angle / 360));
   return svg;
 }
-//   const flowers = svg
-//     //.select('svg')
-//     .selectAll('g')
-//     .data(flowersData)
-//     .enter()
-//     .append('g')
-//     .attr(
-//       "transform",
-//       (d) => `translate(${petalSize})scale(${d.petSize})`);
-//      //changes size of the flower/group
-
-// console.log(petalPath);
-//   flowers
-//     .selectAll("path") //for each flower select all of the paths
-//     .data(d => d.petals)
-//     .enter()
-//     .append('path') //returns array of petals from above
-//     .attr('d', d => d.petalPath)
-//     .attr("tranform", (d) => `rotate(${d.angle})`)
-//     .style("fill", "blue");
-
-//   return svg;
-// }
-
 loadData();
 
 //Loads data, console logs it as an array of objects
